@@ -7,9 +7,9 @@ std::FILE * fp;
 
 class DATA
 {
+public:
 	int id, age;
 	std::string name, email;
-public:
 	DATA * next;
 	DATA(int _id, char * _name, char * _email, int _age) : 
 		id(_id), name(std::string(_name)), email(std::string(_email)), age(_age), next(NULL) {}
@@ -33,9 +33,6 @@ public:
 					break;
 				case 3:
 					std::fprintf(fp, "%d", age);
-					break;
-				default: 
-					std::fprintf(stderr, "Error item number to print.\n");
 			}
 		}
 		std::fprintf(fp, ")\n");

@@ -1,0 +1,75 @@
+db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > db > Starting test suite ``limit``
+The test file t1.txt passed
+The test file t2.txt passed
+The test file t3.txt passed
+The test suite ``limit`` total passed 3/3
+
+Starting test suite ``projection``
+The test file t1.txt passed
+The test file t2.txt passed
+The test file t3.txt passed
+The test file t4.txt passed
+The test file t5.txt passed
+The test file t6.txt passed
+The test suite ``projection`` total passed 6/6
+
+Starting test suite ``numeric_where``
+The test file t1.txt passed
+The test file t2.txt passed
+The test file t3.txt passed
+The test file t4.txt passed
+The test file t5.txt passed
+The test file t6.txt passed
+The test suite ``numeric_where`` total passed 6/6
+
+Starting test suite ``update``
+The test file t1.txt passed
+The test file t2.txt passed
+The test file t3.txt passed
+The test file t4.txt passed
+The test file t5.txt passed
+The test file t6.txt passed
+The test suite ``update`` total passed 6/6
+
+Starting test suite ``primary_key``
+The test file t1.txt passed
+The test file t2.txt passed
+The test file t3.txt passed
+The test file t4.txt passed
+The test suite ``primary_key`` total passed 4/4
+
+Starting test suite ``offset``
+The test file t1.txt passed
+The test file t2.txt passed
+The test file t3.txt passed
+The test suite ``offset`` total passed 3/3
+
+Starting test suite ``aggre``
+The test file t1.txt passed
+The test file t2.txt passed
+The test file t3.txt passed
+The test file t4.txt passed
+The test suite ``aggre`` total passed 4/4
+
+Starting test suite ``logical``
+The test file t1.txt passed
+The test file t2.txt passed
+The test file t3.txt passed
+The test suite ``logical`` total passed 3/3
+
+Starting test suite ``string``
+The test file t1.txt passed
+The test file t2.txt passed
+The test file t3.txt passed
+The test suite ``string`` total passed 3/3
+
+Starting test suite ``delete``
+The test file t1.txt passed
+The test file t2.txt passed
+The test file t3.txt passed
+The test file t4.txt passed
+The test file t5.txt passed
+The test file t6.txt passed
+The test file t7.txt passed
+The test suite ``delete`` total passed 7/7
+
