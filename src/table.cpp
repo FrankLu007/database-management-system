@@ -7,18 +7,20 @@ class TABLE
 	DATA * head, * tail;
 	std::set <int> id_set;
 	unsigned num_data;
+	char * filename;
 public:
-	TABLE(): head(NULL), tail(NULL), num_data(0)
+	TABLE(): head(NULL), tail(NULL), num_data(0), filename(NULL)
 	{
 		id_set.clear();
 	}
+	bool id_check(int id) {return id_set.find(id) != id_set.end();}
 	bool insert(char * command)
 	{
 		int id, age;
 		char * name, * email;
 		std::strtok(command, " ");
 		id = std::atoi(std::strtok(NULL, " "));
-		if(id_set.find(id) != id_set.end()) return false;
+		if(id_check(id)) return false;
 		name = std::strtok(NULL, " ");
 		email = std::strtok(NULL, " ");
 		age = std::atoi(std::strtok(NULL, " "));
@@ -36,18 +38,20 @@ public:
 		num_data++;
 		return true;
 	}
-	void print(CONDITION * condition, std::vector <int> & content, int limit, int offset)
+	unsigned print(CONDITION * condition, std::vector <int> & content, int limit, int offset, FILE * fp)
 	{
 		DATA * cur = head;
 		while(offset-- && cur) cur = cur->next;
-		if(!cur || !limit) return ;
+		if(!cur || !limit) return 0;
 		
+		unsigned num = 0;
 		while(limit-- && cur)
 		{
-			if(!condition || condition->test(cur)) cur->print(content);
+			if(!condition || condition->test(cur)) {cur->print(content, fp); num++;}
 			else limit++;
 			cur = cur->next;
 		}
+		return num;
 	}
 	void del(CONDITION * condition)
 	{
@@ -144,4 +148,55 @@ public:
 		}
 	}
 	int size() {return num_data;}
+	void load(const char * _filename)
+	{
+		if(filename) store();
+		const unsigned data_size = 520;
+		static char name[256], email[256];
+		static int id, age;
+		FILE * fp = std::fopen(_filename, "rb");
+		if(!fp) 
+		{
+			std::fprintf(stderr, "File doesn't exist : %s.\n", _filename);
+			fp = std::fopen(_filename, "ab");
+		}
+		while(std::fread(&id, 1, 4, fp))
+		{
+			std::fread(name, 256, 1, fp);
+			std::fread(email, 256, 1, fp);
+			std::fread(&age, 1, 4, fp);
+			id_set.insert(id);
+			if(num_data)
+			{
+				tail->next = new DATA(id, name, email, age);
+				tail = tail->next;
+			}
+			else
+			{
+				head = new DATA(id, name, email, age);
+				tail = head;
+			}
+			num_data++;
+		}
+		std::fclose(fp);
+		printf("%s\n", _filename);
+		filename = strdup(_filename);
+	}
+	void store()
+	{
+		if(!filename) {del(NULL); return ;}
+		FILE * fp = std::fopen(filename, "wb");
+		DATA * cur = head;
+		while(cur)
+		{
+			std::fwrite(&(cur->id), 1, 4,  fp);
+			std::fwrite(cur->name.c_str(), 256, 1,  fp);
+			std::fwrite(cur->email.c_str(), 256, 1,  fp);
+			std::fwrite(&(cur->age), 1, 4,  fp);
+			cur = cur->next;
+		}
+		std::fclose(fp);
+		del(NULL);
+		delete filename;
+	}
 };

@@ -2,9 +2,6 @@
 #include <vector>
 #include <cstdio>
 
-bool print_data;
-std::FILE * fp;
-
 class DATA
 {
 public:
@@ -13,9 +10,8 @@ public:
 	DATA * next;
 	DATA(int _id, char * _name, char * _email, int _age) : 
 		id(_id), name(std::string(_name)), email(std::string(_email)), age(_age), next(NULL) {}
-	void print(std::vector <int> & content)
+	void print(std::vector <int> & content, FILE * fp)
 	{
-		if(!print_data) return ;
 		std::fprintf(fp, "(");
 		for(unsigned i = 0 ; i < content.size() ; i++)
 		{

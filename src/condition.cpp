@@ -9,7 +9,7 @@ class CONDITION
 	double * be, * se, * ne;                  //    1         or   name
 public:                                       //    2          -   email
 	CONDITION * left, * right;                //    3          -    age
-	CONDITION()                               // attribute
+	void init()                               // attribute
 	{
 		be = se = ne = NULL;
 		str_eq = str_ne = str_sub = NULL;
@@ -17,7 +17,7 @@ public:                                       //    2          -   email
 	}
 	CONDITION(char * command)
 	{
-		CONDITION();
+		init();
 		int len = std::strlen(command);
 		char * tmp, sub_command[250];
 
@@ -45,17 +45,17 @@ public:                                       //    2          -   email
 		}
 		tmp = std::strtok(strdup(command), "><=! ");
 		set_endpoint(tmp);
-		std::fprintf(stderr, "First : %s\n", tmp);
+		//std::fprintf(stderr, "First : %s\n", tmp);
 		if(!attribute || attribute == 3)
 		{
 			tmp = std::strtok(strdup(command), "idage0123456789 ");
-			std::fprintf(stderr, "Second : |%s|\n", tmp);
+			//std::fprintf(stderr, "Second : |%s|\n", tmp);
 			set_num(tmp, std::atof(std::strtok(strdup(command), "idage><=! ")));
 		}
 		else
 		{
 			tmp = std::strtok(strdup(command), "\"namemail ");
-			std::fprintf(stderr, "Second : |%s|\n", tmp);
+			//std::fprintf(stderr, "Second : |%s|\n", tmp);
 			set_str(tmp, std::strstr(command, "\""));
 		}
 	}
@@ -110,7 +110,7 @@ public:                                       //    2          -   email
 	}
 	void set_num(const char * type, double num)
 	{
-		std::fprintf(stderr, "Third : |%f|\n", num);
+		//std::fprintf(stderr, "Third : |%f|\n", num);
 		int len = std::strlen(type);
 		if(len == 1)
 			switch(type[0])
@@ -142,7 +142,7 @@ public:                                       //    2          -   email
 	}
 	void set_str(const char * type, const  char * str)
 	{
-		std::fprintf(stderr, "Third : |%s|\n", str);
+		//std::fprintf(stderr, "Third : |%s|\n", str);
 		int len = std::strlen(type);
 		switch(len)
 		{
@@ -155,5 +155,17 @@ public:                                       //    2          -   email
 			case 4 :
 				str_sub = new std::string(str);
 		}
+	}
+	void clean()
+	{
+		if(right) right->clean();
+		if(left) left->clean();
+		if(be) delete be;
+		if(se) delete se;
+		if(ne) delete ne;
+		if(str_eq) delete str_eq;
+		if(str_ne) delete str_ne;
+		if(str_sub) delete str_sub;
+		delete this;
 	}
 };

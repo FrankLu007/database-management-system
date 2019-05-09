@@ -2,9 +2,44 @@
 #include <cstring>
 #include "table.cpp"
 
-TABLE table;
-extern bool print_data;
-extern std::FILE * fp;
+const char help_msg[] = "# Supported Commands\n"
+    "\n"
+    "## Built-in Commands\n"
+    "\n"
+    "  * .exit\n"
+    "\tThis cmd archives the table, if the db file is specified, then exit.\n"
+    "\n"
+    "  * .output\n"
+    "\tThis cmd change the output strategy, default is stdout.\n"
+    "\n"
+    "\tUsage:\n"
+    "\t    .output (<file>|stdout)\n\n"
+    "\tThe results will be redirected to <file> if specified, otherwise they will display to stdout.\n"
+    "\n"
+    "  * .load\n"
+    "\tThis command loads records stored in <DB file>.\n"
+    "\n"
+    "\t*** Warning: This command will overwrite the records already stored in current table. ***\n"
+    "\n"
+    "\tUsage:\n"
+    "\t    .load <DB file>\n\n"
+    "\n"
+    "  * .help\n"
+    "\tThis cmd displays the help messages.\n"
+    "\n"
+    "## Query Commands\n"
+    "\n"
+    "  * insert\n"
+    "\tThis cmd inserts one user record into table.\n"
+    "\n"
+    "\tUsage:\n"
+    "\t    insert <id> <name> <email> <age>\n"
+    "\n"
+    "\t** Notice: The <name> & <email> are string without any whitespace character, and maximum length of them is 255. **\n"
+    "\n"
+    "  * select\n"
+    "\tThis cmd will display all user records in the table.\n"
+    "\n";
 
 CONDITION * parse_condition(char * command)
 {
@@ -25,35 +60,38 @@ CONDITION * parse_condition(char * command)
 
 int main(int N, char ** args)
 {
-	char command[250], * type;
+	static char command[250], * type;
 	int len;
-	CONDITION * condition;
-	print_data = true;
-	fp = stdout;
-	while(1)
+	CONDITION * condition = NULL;
+	FILE * fp = stdout;
+	TABLE table;
+	if(N == 2) table.load(args[1]);
+	while(true)
 	{
-		std::printf("db > ");
+		if(fp == stdout) std::printf("db > ");
 		std::fgets(command, 250, stdin);
-		len = std::strlen(command);
-		command[len - 1] = 0;
+		len = std::strlen(command) - 1;
 		if(len <= 3) continue;
+		command[len] = 0;
+		if(condition) condition->clean();
 		condition = parse_condition(command);
 		type = std::strtok(strdup(command), " \n");
 
 		if(!std::strcmp(type, "select"))
 		{
 			std::vector <int> content;
-			content.clear();
-			char * item;
+			char * item, * tmp;
+			unsigned limit = (tmp = std::strstr(command, " limit ")) ? std::atoll(tmp + 7) : table.size(), 
+					offset = (tmp = std::strstr(command, " offset ")) ? std::atoll(tmp + 7) : 0;
 			
-			int limit = table.size(), offset = 0;
-
+			content.clear();
 			if(std::strstr(command, " sum(") || std::strstr(command, " avg(") || std::strstr(command, " count("))
 			{
+				if(offset || !limit) {std::fprintf(stderr, "Empty set\n"); continue;}
 				bool first = true;
 				int target;
+
 				std::fprintf(fp, "(");
-				type = std::strtok(command, " ");
 				while(type = std::strtok(NULL, "(), "))
 				{
 					target = -1;
@@ -62,7 +100,7 @@ int main(int N, char ** args)
 						item = std::strtok(NULL, "() ,");
 						if(!std::strcmp(item, "id")) target = 0;
 						else if(!std::strcmp(item, "age")) target = 3;
-						if(!first) fprintf(fp, ", ");
+						if(!first) std::fprintf(fp, ", ");
 						else first = false;
 						fprintf(fp, "%d", (int)table.aggre(condition, target, 0));
 					}
@@ -71,14 +109,14 @@ int main(int N, char ** args)
 						item = std::strtok(NULL, "() ,");
 						if(!std::strcmp(item, "id")) target = 0;
 						else if(!std::strcmp(item, "age")) target = 3;
-						if(!first) fprintf(fp, ", ");
+						if(!first) std::fprintf(fp, ", ");
 						else first = false;
 						fprintf(fp, "%.3lf", table.aggre(condition, target, 1));
 					}
 					else if(!std::strcmp(type, "count"))
 					{
 						item = std::strtok(NULL, "() ,");
-						if(!first) fprintf(fp, ", ");
+						if(!first) std::fprintf(fp, ", ");
 						else first = false;
 						fprintf(fp, "%d", (int)table.aggre(condition, target, 2));
 					}
@@ -95,23 +133,19 @@ int main(int N, char ** args)
 				else break;
 			}
 			if(!content.size()) {for(int i = 0 ; i < 4 ; i++) content.push_back(i);}
-			if(item)
-			do
-			{
-				if(!std::strcmp(item, "limit")) limit = std::atoi(std::strtok(NULL, ", "));
-				else if(!std::strcmp(item, "offset")) offset = std::atoi(std::strtok(NULL, ", "));
-			} while(item = std::strtok(NULL, ", "));
-			table.print(condition, content, limit, offset);
+			if(!table.print(condition, content, limit, offset, fp)) std::fprintf(stderr, "Empty set\n");
 		}
 		else if(!std::strcmp(type, "insert")) 
 		{
-			if(!table.insert(command)) 
-				std::fprintf(stderr, "Insert fail with command : %s", command);
+			if(!table.insert(strdup(command))) 
+				std::fprintf(stderr, "Invalid insert with command : %s\n", command);
 		}
 		else if(!std::strcmp(type, "update"))
 		{
 			int target;
-			type = std::strtok(std::strstr(command, " set ") + 5, "=");
+			std::strtok(NULL, " ");
+			std::strtok(NULL, " ");
+			type = std::strtok(NULL, "=");
 			switch(std::strlen(type))
 			{
 				case 2 :
@@ -126,6 +160,11 @@ int main(int N, char ** args)
 				case 5 :
 					target = 2;
 			}
+			if(!target && (table.aggre(condition, 0, 2) > 1 || table.id_check(std::atoi(std::strstr(command, "=") + 1))))
+			{
+				std::fprintf(stderr, "Invalid update with command : %s\n", command);
+				continue;
+			}
 			table.update(condition, target, std::strtok(NULL, " "));
 		}
 		else if(!std::strcmp(type, "delete")) table.del(condition);
@@ -135,13 +174,19 @@ int main(int N, char ** args)
 			char * filename = std::strtok(NULL, " \n");
 			if(fp != stdout) std::fclose(fp);
 			fp = std::strcmp(filename, "stdout") ? std::fopen(filename, "w") : stdout;
-			if(!fp) fprintf(stderr, "Output error with command : %s", command);
 		}
 		else if(!std::strcmp(type, ".load"))
 		{
-
+			table.del(NULL);
+			type = std::strtok(NULL, " \n");
+			table.load(type);
 		}
-		else if(!std::strcmp(type, ".exit")) return 0;
-		else fprintf(stderr, "Unrecognized command %s", command);
+		else if(!std::strcmp(type, ".help")) std::printf("%s", help_msg);
+		else if(!std::strcmp(type, ".exit")) 
+		{
+			table.store();
+			return 0;
+		}
+		else fprintf(stderr, "Unrecognized command %s\n", command);
 	}
 }
