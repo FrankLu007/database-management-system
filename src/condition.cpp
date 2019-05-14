@@ -86,6 +86,7 @@ public:                                       //    2          -   email
 	}
 	void set_endpoint(const char * type) 
 	{
+		//std::fprintf(stderr, "Third : |%s|\n", type);
 		int len = std::strlen(type);
 		endpoint = 1;
 		switch(len)

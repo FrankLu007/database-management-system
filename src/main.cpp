@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <cstring>
+#include <stdio_ext.h>
 #include "table.cpp"
 
 const char help_msg[] = "# Supported Commands\n"
@@ -145,7 +146,7 @@ int main(int N, char ** args)
 			int target;
 			std::strtok(NULL, " ");
 			std::strtok(NULL, " ");
-			type = std::strtok(NULL, "=");
+			type = std::strtok(NULL, " = ");
 			switch(std::strlen(type))
 			{
 				case 2 :
@@ -160,16 +161,17 @@ int main(int N, char ** args)
 				case 5 :
 					target = 2;
 			}
-			if(!target && (table.aggre(condition, 0, 2) > 1 || table.id_check(std::atoi(std::strstr(command, "=") + 1))))
+			if(!target && (table.aggre(condition, 0, 2) > 1 || table.id_check(std::atoi(std::strstr(command, "=") + 2))))
 			{
 				std::fprintf(stderr, "Invalid update with command : %s\n", command);
 				continue;
 			}
-			table.update(condition, target, std::strtok(NULL, " "));
+			table.update(condition, target, std::strtok(NULL, " ="));
 		}
 		else if(!std::strcmp(type, "delete")) table.del(condition);
 		else if(!std::strcmp(type, ".output"))
 		{
+			__fpurge(stdout);
 			std::strtok(strdup(command), " \n");
 			char * filename = std::strtok(NULL, " \n");
 			if(fp != stdout) std::fclose(fp);
