@@ -1,18 +1,13 @@
 # Simple DBMS                                                                                                   
 
-This project is a simple DBMS implemented using C, as the education material of the Introduction to Database Systems in National Chiao Tung University
+This project is a simple DBMS implemented using C++, as the education material of the Introduction to Database Systems in National Chiao Tung University
 
 ## Prerequisite
 
 * make >= 4.1
 * gcc >= 5.4.0
-* g++ >= 5.4.0
-* gtest >= 1.8.1
+* g++ >= 7.4.0
 * python >= 3.6.0
-
-## Unit test
-
-`$ make check`
 
 ## System test
 
@@ -26,10 +21,6 @@ This project is a simple DBMS implemented using C, as the education material of 
 
 ## Quick Start
 `$ ./shell`
-
-## Query
-
-***The current table schema is hard coded, the schema in the [include/User.h](include/User.h), you can check the User_t to get the detail of each field.***
 
 ### Table schema
 #### `User` table
@@ -66,10 +57,11 @@ execution command.
 `$ ./shell <DB file>`
 
 ## Project Layout
-    ├─ include/           Header files
     ├─ src/               Source files
-    │  ├─ shell.c         Entry point, which contains main()
-    │  └─ Util.c          Some utility functions
+    │  ├─ main.cpp        Entry point, which contains main()
+    │  ├─ table.cpp       Command handler
+    │  ├─ condition.cpp   Condition analyzer
+    │  └─ data.cpp        Data handler
     ├─ test/              Unit tests & system tests
     │  ├─ include/        Test header files
     │  ├─ system/         System tests
