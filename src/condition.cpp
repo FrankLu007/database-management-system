@@ -1,23 +1,30 @@
 #include <cstring>
+#include <unordered_map>
+#include <unordered_set>
 #include "data.cpp"
+
+typedef std::unordered_set <DATA *> DATA_SET;
+typedef std::unordered_map <unsigned, DATA_SET> AGE_MAP;
+typedef std::unordered_map <std::string, DATA_SET> STR_MAP;
+typedef std::unordered_map <unsigned, DATA *> ID_MAP;
+
 
 class CONDITION
 {
 	unsigned endpoint : 1, attribute : 2;     //               0     1     endpoint
-	std::string * str_eq, * str_ne, * str_sub;//    0         and   id
+	std::string * str_eq, * str_ne;           //    0         and   id
 	double * be, * se, * ne;                  //    1         or   name
-public:                                       //    2          -   email
-	CONDITION * left, * right;                //    3          -    age
+	CONDITION * left, * right;                //    2          -   email
+public:                                       //    3          -    age         
 	void init()                               // attribute
 	{
 		be = se = ne = NULL;
-		str_eq = str_ne = str_sub = NULL;
+		str_eq = str_ne = NULL;
 		left = right = NULL;
 	}
 	CONDITION(char * command)
 	{
 		init();
-		int len = std::strlen(command);
 		char * tmp, sub_command[250];
 
 		if(tmp = std::strstr(command, " and "))
@@ -42,66 +49,101 @@ public:                                       //    2          -   email
 			right = new CONDITION(sub_command);
 			return ;
 		}
-		tmp = std::strtok(strdup(command), "><=! ");
+		tmp = std::strtok(strdup(command), " ");
 		set_endpoint(tmp);
 		//std::fprintf(stderr, "First : %s\n", tmp);
 		if(!attribute || attribute == 3)
 		{
-			tmp = std::strtok(strdup(command), "idage0123456789 ");
+			tmp = std::strtok(NULL, " ");
 			//std::fprintf(stderr, "Second : |%s|\n", tmp);
-			set_num(tmp, std::atof(std::strtok(strdup(command), "idage><=! ")));
+			set_num(tmp, std::atof(std::strtok(NULL, " ")));
 		}
 		else
 		{
-			tmp = std::strtok(strdup(command), "\"namemail ");
+			tmp = std::strtok(NULL, " ");
 			//std::fprintf(stderr, "Second : |%s|\n", tmp);
-			set_str(tmp, std::strstr(command, "\""));
+			set_str(tmp, std::strtok(NULL, " "));
 		}
 	}
-	bool test(DATA * data) 
+	void test(ID_MAP & id_map, STR_MAP & name_map, STR_MAP & email_map, AGE_MAP & age_map, DATA_SET & ans, const bool mode)
 	{
 		if(endpoint)
 		{
-			if(attribute == 3 || !attribute)
+			double num;
+			std::string str;
+			if(mode) // take out 
 			{
-				double num = attribute ? data->age : data->id;
-				if(be && num < * be) return false;
-				if(se && num > * se) return false;
-				if(ne && num == * ne) return false;
-				return true;
+				for(DATA_SET::iterator it = ans.begin() ; it != ans.end() ; it++)
+				{
+					if(attribute == 3 || !attribute)
+					{
+						num = attribute ? (* it)->age : (* it)->id;
+						if(be && num < * be) ans.erase(it);
+						if(se && num > * se) ans.erase(it);
+						if(ne && num == * ne) ans.erase(it);
+						continue;
+					}
+					str = attribute & 1 ? (* it)->name : (* it)->email;
+					if(str_eq && str != * str_eq) ans.erase(it);
+					if(str_ne && str == * str_ne) ans.erase(it);
+				}
+				return ;
 			}
-			std::string & str = attribute & 1 ? data->name : data->email;
-			if(str_eq && str != * str_eq) return false;
-			if(str_ne && str == * str_ne) return false;
-			return true;
+			// put in
+			if(!attribute)
+			{
+				for(ID_MAP::iterator it = id_map.begin() ; it != id_map.end() ; it++)
+				{
+					num = it->first;
+					if(be && num < * be) continue;
+					if(se && num > * se) continue;
+					if(ne && num == * ne) continue;
+					ans.insert(it->second);
+				}
+				return;
+			}
+			if(attribute == 1)
+			{
+				for(STR_MAP::iterator it = name_map.begin() ; it != name_map.end() ; it++)
+				{
+					str = it->first;
+					if(str_eq && str != * str_eq) continue;
+					if(str_ne && str == * str_ne) continue;
+					ans.insert(it->second.begin(), it->second.end());
+				}
+				return;
+			}
+			if(attribute == 2)
+			{
+				for(STR_MAP::iterator it = email_map.begin() ; it != email_map.end() ; it++)
+				{
+					str = it->first;
+					if(str_eq && str != * str_eq) continue;
+					if(str_ne && str == * str_ne) continue;
+					ans.insert(it->second.begin(), it->second.end());
+				}
+				return;
+			}
+			for(AGE_MAP::iterator it = age_map.begin() ; it != age_map.end() ; it++)
+			{
+				num = it->first;
+				if(be && num < * be) continue;
+				if(se && num > * se) continue;
+				if(ne && num == * ne) continue;
+				ans.insert(it->second.begin(), it->second.end());
+			}
+			return ;
 		}
-		if(attribute)
-		{
-			if(left->test(data)) return true;
-			return right->test(data);
-		}
-		if(!left->test(data)) return false;
-		return right->test(data);
+
+		left->test(id_map, name_map, email_map, age_map, ans, 0);
+		if(attribute) right->test(id_map, name_map, email_map, age_map, ans, 0); // 0 means put into 'ans' : or
+		else right->test(id_map, name_map, email_map, age_map, ans, 1); // 1 means take out from 'ans' : and
 	}
 	void set_endpoint(const char * type) 
 	{
 		//std::fprintf(stderr, "Third : |%s|\n", type);
-		int len = std::strlen(type);
 		endpoint = 1;
-		switch(len)
-		{
-			case 2 :
-				attribute = 0;
-				break;
-			case 3 :
-				attribute = 3;
-				break;
-			case 4 :
-				attribute = 1;
-				break;
-			case 5 :
-				attribute = 2;
-		}
+		attribute = distinguish_item(type);
 	}
 	void set_not_endpoint(const char * type)
 	{
@@ -111,7 +153,7 @@ public:                                       //    2          -   email
 	void set_num(const char * type, double num)
 	{
 		//std::fprintf(stderr, "Third : |%f|\n", num);
-		int len = std::strlen(type);
+		unsigned len = std::strlen(type);
 		if(len == 1)
 			switch(type[0])
 			{
@@ -143,7 +185,7 @@ public:                                       //    2          -   email
 	void set_str(const char * type, const  char * str)
 	{
 		//std::fprintf(stderr, "Third : |%s|\n", str);
-		int len = std::strlen(type);
+		unsigned len = std::strlen(type);
 		switch(len)
 		{
 			case 1 :
@@ -151,9 +193,6 @@ public:                                       //    2          -   email
 				break;
 			case 2 :
 				str_ne = new std::string(str);
-				break;
-			case 4 :
-				str_sub = new std::string(str);
 		}
 	}
 	void clean()
@@ -165,7 +204,6 @@ public:                                       //    2          -   email
 		if(ne) delete ne;
 		if(str_eq) delete str_eq;
 		if(str_ne) delete str_ne;
-		if(str_sub) delete str_sub;
 		delete this;
 	}
 };

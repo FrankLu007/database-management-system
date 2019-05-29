@@ -61,10 +61,10 @@ int main(int N, char ** args)
 {
 
 	static char command[250], * type;
-	int len, target_item, target_table;
-	CONDITION * condition = NULL;
+	unsigned len, target_item, target_table;
+	static CONDITION * condition = NULL;
 	FILE * fp = stdout;
-	TABLE table[2]; // first is 'user', the other is 'like'
+	static TABLE table[2]; // first is 'user', the other is 'like'
 
 	while(true)
 	{
@@ -86,7 +86,7 @@ int main(int N, char ** args)
 
 		if(!std::strcmp(type, "select"))
 		{
-			std::vector <int> content;
+			static std::vector <unsigned> content;
 			char * item, * tmp;
 			unsigned limit = (tmp = std::strstr(command, " limit ")) ? std::atoll(tmp + 7) : -1, // get the value of limit
 					offset = (tmp = std::strstr(command, " offset ")) ? std::atoll(tmp + 7) : 0; // get the value of offset
@@ -96,6 +96,7 @@ int main(int N, char ** args)
 			{
 				if(offset || !limit) {std::fprintf(stderr, "Empty set\n"); continue;}
 				bool first = true;
+				unsigned join = std::strstr(command, " id = id1 ") ? 1 : (std::strstr(command, " id = id2 ") ? 2 : 0); // get the type of join
 
 				std::fprintf(fp, "(");
 				while(type = std::strtok(NULL, "(, "))
@@ -106,7 +107,7 @@ int main(int N, char ** args)
 						target_item = distinguish_item(item);
 						if(!first) std::fprintf(fp, ", ");
 						else first = false;
-						std::fprintf(fp, "%d", (int)table[target_table].aggre(condition, target_item, 0));
+						std::fprintf(fp, "%d", (int)table[target_table].aggre(condition, target_item, 0, 0, NULL));
 					}
 					else if(!std::strcmp(type, "avg"))
 					{
@@ -114,14 +115,14 @@ int main(int N, char ** args)
 						target_item = distinguish_item(item);
 						if(!first) std::fprintf(fp, ", ");
 						else first = false;
-						std::fprintf(fp, "%.3lf", table[target_table].aggre(condition, target_item, 1));
+						std::fprintf(fp, "%.3lf", table[target_table].aggre(condition, target_item, 1, 0, NULL));
 					}
 					else if(!std::strcmp(type, "count"))
 					{
 						item = std::strtok(NULL, ")");
 						if(!first) std::fprintf(fp, ", ");
 						else first = false;
-						fprintf(fp, "%d", (int)table[target_table].aggre(condition, target_item, 2));
+						fprintf(fp, "%d", (int)table[target_table].aggre(condition, target_item, 2, join, & table[1]));
 					}
 				}
 				std::fprintf(fp, ")\n");
@@ -157,7 +158,7 @@ int main(int N, char ** args)
 			std::strtok(NULL, " "); //skip the table name
 			std::strtok(NULL, " "); //skip the word 'set'
 			target_item = distinguish_item(std::strtok(NULL, " "));
-			if(!target_item && (table[target_table].aggre(condition, 0, 2) > 1 || table[target_table].id_check(std::atoi(std::strstr(command, "=") + 2))))
+			if(!target_item && (table[target_table].aggre(condition, 0, 2, 0, NULL) > 1 || table[target_table].id_check(std::atoi(std::strstr(command, "=") + 2))))
 			{
 				std::fprintf(stderr, "Invalid update with command : %s\n", command);
 				continue;
