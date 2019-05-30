@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cmath>
 #include "condition.cpp"
 
 class TABLE
@@ -8,10 +9,11 @@ class TABLE
 	ID_MAP id_map;
 	AGE_MAP age_map;
 	STR_MAP name_map, email_map;
-	unsigned print_order;
+	std::vector<DATA *> array;
 public:
-	TABLE(): print_order(0)
+	TABLE()	
 	{
+		array.clear();
 		data.clear();
 		id_map.clear();
 		age_map.clear();
@@ -54,11 +56,12 @@ public:
 			email = std::strtok(NULL, " ");
 			age = std::atoll(std::strtok(NULL, " "));
 
-			tmp = new DATA(id, name, email, age, print_order++);
+			tmp = new DATA(id, name, email, age, array.size());
+			array.push_back(tmp);
 			data.insert(tmp);
 			id_map[id] = tmp;
-			insert(name_map, name, tmp);
-			insert(email_map, email, tmp);
+			insert(name_map, std::string(name), tmp);
+			insert(email_map, std::string(email), tmp);
 			insert(age_map, age, tmp);
 		}
 		else // if the target table is 'like'
@@ -66,7 +69,8 @@ public:
 			id = std::atoll(std::strtok(NULL, " ")); // id1
 			age = std::atoll(std::strtok(NULL, " ")); // id2
 
-			tmp = new DATA(id, age, print_order++);
+			tmp = new DATA(id, age, array.size());
+			array.push_back(tmp);
 			data.insert(tmp);
 			id_map[id] = tmp;
 			insert(age_map, age, tmp);
@@ -77,26 +81,49 @@ public:
 	{
 		if(!limit || offset >= data.size()) return 0;
 
+		unsigned count = 0;
 		static std::vector <DATA *> output;
 		ans.clear();
 
-		if(!condition) output = std::vector <DATA *>(data.begin(), data.end()); // put them into a vector
+		if(!condition) 
+		{
+			if(data.size() * std::log2(data.size()) >= array.size()) 
+			{
+				for(unsigned i = 0 ; i < array.size() ; i++)
+				{
+					if(!array[i]) continue;
+					if(offset) {offset--; continue;}
+					if(limit)
+					{
+						count++;
+						array[i]->print(content, fp);
+						limit--;
+					}
+					else break;
+				}
+				return count;
+			}
+			else
+			{
+				output = std::vector <DATA *>(data.begin(), data.end()); // put them into a vector
+				std::sort(output.begin(), output.end(), cmp); // sort by 'print_order'
+			}
+		}
 		else 
 		{	
 			condition->test(id_map, name_map, email_map, age_map, ans, 0); // get the answer set
 			output = std::vector <DATA *>(ans.begin(), ans.end()); // put them into a vector
+			std::sort(output.begin(), output.end(), cmp); // sort by 'print_order'
 		}
-		std::sort(output.begin(), output.end(), cmp); // sort by 'print_order'
-
-		limit  = std::max((unsigned)output.size(), limit + offset);
-		for(unsigned i = offset ; i < limit ; i++) output[i]->print(content, fp);
-		return limit - offset;
+		
+		for(unsigned i = offset ; limit && i < output.size(); i++) if(output[i]) {output[i]->print(content, fp); limit--; count++;}
+		return count;
 	}
 	void del(CONDITION * condition)
 	{
 		if(!condition) //XDD, not good but fast
 		{
-			print_order = 0;
+			array.clear();
 			id_map.clear();
 			data.clear();
 			age_map.clear();
@@ -117,32 +144,45 @@ public:
 			erase(name_map, tmp->name, tmp);
 			erase(email_map, tmp->email, tmp);
 			erase(age_map, tmp->age, tmp);
+			array[tmp->print_order] = NULL;
+			delete tmp;
 		}
 	}
 	double aggre(CONDITION * condition, unsigned content, unsigned mode, unsigned join, TABLE * like)
 	{
-		// int sum = 0, count = 0;
-		// DATA * cur = head;
+		unsigned sum = 0, count;
+		DATA_SET * target = condition ? & ans : & data;
 
-		// while(cur)
-		// {
-		// 	if(!condition || condition->test(cur))
-		// 	{
-		// 		if(!content) sum += cur->id;
-		// 		else if(content == 3) sum += cur->age;
-		// 		if(join)
-		// 		{
-		// 			if(join & 1) count += like->id_map.find(cur->id) != like->id_map.end();
-		// 			else count += like->age_map.find(cur->id) == like->age_map.end() ? 0 : like->age_map[cur->id].size();
-		// 		}
-		// 		else count++;
-		// 	}
-		// 	cur = cur->next;
-		// }
-		// if(!mode) return sum;
-		// if(mode & 1) return (double)sum/count;
-		// return count;
-		return 0;
+		if(condition) 
+		{
+			ans.clear();
+			condition->test(id_map, name_map, email_map, age_map, ans, 0);
+		}
+
+		if(!join)
+		{
+			count = target->size();
+			if(mode == 2) return count;
+			if(!content) // id
+				for(DATA_SET::iterator it = target->begin() ; it != target->end() ; it++) sum += (* it)->id;
+			else if(content == 3) // age
+				for(DATA_SET::iterator it = target->begin() ; it != target->end() ; it++) sum += (* it)->age;
+			if(!mode) return sum;
+			return (double)sum/count;
+		}
+		count = 0;
+		if(join == 1)
+		{
+			for(DATA_SET::iterator it = target->begin() ; it != target->end() ; it++) 
+				if(like->id_map.find((* it)->id) != like->id_map.end()) count++;
+		}
+		else
+		{
+			for(DATA_SET::iterator it = target->begin() ; it != target->end() ; it++) 
+				if(like->age_map.find((* it)->id) != like->age_map.end())
+					count += like->age_map[(* it)->id].size();
+		}
+		return count;
 	}
 	void update(CONDITION * condition, unsigned content, char * input)
 	{
@@ -240,3 +280,4 @@ public:
 	}
 	int size() {return data.size();}
 };
+

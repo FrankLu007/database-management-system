@@ -90,8 +90,10 @@ int main(int N, char ** args)
 			char * item, * tmp;
 			unsigned limit = (tmp = std::strstr(command, " limit ")) ? std::atoll(tmp + 7) : -1, // get the value of limit
 					offset = (tmp = std::strstr(command, " offset ")) ? std::atoll(tmp + 7) : 0; // get the value of offset
-			
+
+			target_table = std::strcmp(std::strstr(command, " from ") + 6, "like") ? 0 : 1; // get the name of table
 			content.clear();
+
 			if(std::strstr(command, " sum(") || std::strstr(command, " avg(") || std::strstr(command, " count(")) // if the query contains aggregation
 			{
 				if(offset || !limit) {std::fprintf(stderr, "Empty set\n"); continue;}
@@ -107,7 +109,7 @@ int main(int N, char ** args)
 						target_item = distinguish_item(item);
 						if(!first) std::fprintf(fp, ", ");
 						else first = false;
-						std::fprintf(fp, "%d", (int)table[target_table].aggre(condition, target_item, 0, 0, NULL));
+						std::fprintf(fp, "%u", (unsigned)table[target_table].aggre(condition, target_item, 0, 0, NULL));
 					}
 					else if(!std::strcmp(type, "avg"))
 					{
@@ -122,7 +124,7 @@ int main(int N, char ** args)
 						item = std::strtok(NULL, ")");
 						if(!first) std::fprintf(fp, ", ");
 						else first = false;
-						fprintf(fp, "%d", (int)table[target_table].aggre(condition, target_item, 2, join, & table[1]));
+						std::fprintf(fp, "%u", (unsigned)table[target_table].aggre(condition, target_item, 2, join, & table[1]));
 					}
 				}
 				std::fprintf(fp, ")\n");
@@ -136,7 +138,6 @@ int main(int N, char ** args)
 				else break;
 			}
 
-			target_table = std::strcmp(std::strtok(NULL, " "), "like") ? 0 : 1; // get the name of table
 			limit = limit == -1 ? table[target_table].size() : limit;
 
 			if(!content.size()) // if the query field is '*'
@@ -157,7 +158,7 @@ int main(int N, char ** args)
 		{
 			std::strtok(NULL, " "); //skip the table name
 			std::strtok(NULL, " "); //skip the word 'set'
-			target_item = distinguish_item(std::strtok(NULL, " "));
+			target_item = distinguish_item(std::strtok(NULL, " ="));
 			if(!target_item && (table[target_table].aggre(condition, 0, 2, 0, NULL) > 1 || table[target_table].id_check(std::atoi(std::strstr(command, "=") + 2))))
 			{
 				std::fprintf(stderr, "Invalid update with command : %s\n", command);

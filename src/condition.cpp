@@ -49,20 +49,20 @@ public:                                       //    3          -    age
 			right = new CONDITION(sub_command);
 			return ;
 		}
-		tmp = std::strtok(strdup(command), " ");
+		tmp = std::strtok(strdup(command), "><=! ");
 		set_endpoint(tmp);
 		//std::fprintf(stderr, "First : %s\n", tmp);
 		if(!attribute || attribute == 3)
 		{
-			tmp = std::strtok(NULL, " ");
+			tmp = std::strtok(strdup(command), "idage0123456789 ");
 			//std::fprintf(stderr, "Second : |%s|\n", tmp);
-			set_num(tmp, std::atof(std::strtok(NULL, " ")));
+			set_num(tmp, std::atof(std::strtok(strdup(command), "idage><=! ")));
 		}
 		else
 		{
-			tmp = std::strtok(NULL, " ");
+			tmp = std::strtok(strdup(command), "\"namemail ");
 			//std::fprintf(stderr, "Second : |%s|\n", tmp);
-			set_str(tmp, std::strtok(NULL, " "));
+			set_str(tmp, std::strstr(command, "\""));
 		}
 	}
 	void test(ID_MAP & id_map, STR_MAP & name_map, STR_MAP & email_map, AGE_MAP & age_map, DATA_SET & ans, const bool mode)
@@ -73,19 +73,21 @@ public:                                       //    3          -    age
 			std::string str;
 			if(mode) // take out 
 			{
-				for(DATA_SET::iterator it = ans.begin() ; it != ans.end() ; it++)
+				for(DATA_SET::iterator it = ans.begin() ; it != ans.end() ; )
 				{
 					if(attribute == 3 || !attribute)
 					{
 						num = attribute ? (* it)->age : (* it)->id;
-						if(be && num < * be) ans.erase(it);
-						if(se && num > * se) ans.erase(it);
-						if(ne && num == * ne) ans.erase(it);
+						if(be && num < * be) {it = ans.erase(it); continue;}
+						if(se && num > * se) {it = ans.erase(it); continue;}
+						if(ne && num == * ne) {it = ans.erase(it); continue;}
+						it++;
 						continue;
 					}
 					str = attribute & 1 ? (* it)->name : (* it)->email;
-					if(str_eq && str != * str_eq) ans.erase(it);
-					if(str_ne && str == * str_ne) ans.erase(it);
+					if(str_eq && str != * str_eq) {it = ans.erase(it); continue;}
+					if(str_ne && str == * str_ne) {it = ans.erase(it); continue;}
+					it++;
 				}
 				return ;
 			}
@@ -136,8 +138,8 @@ public:                                       //    3          -    age
 		}
 
 		left->test(id_map, name_map, email_map, age_map, ans, 0);
-		if(attribute) right->test(id_map, name_map, email_map, age_map, ans, 0); // 0 means put into 'ans' : or
-		else right->test(id_map, name_map, email_map, age_map, ans, 1); // 1 means take out from 'ans' : and
+		right->test(id_map, name_map, email_map, age_map, ans, 1 - attribute); // 0 means put into 'ans' : or
+		                                                                       // 1 means take out from 'ans' : and
 	}
 	void set_endpoint(const char * type) 
 	{
