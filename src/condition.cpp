@@ -26,7 +26,6 @@ public:                                       //    3          -    age
 	{
 		init();
 		char * tmp, sub_command[250];
-
 		if(tmp = std::strstr(command, " and "))
 		{
 			set_not_endpoint("and");
@@ -49,21 +48,10 @@ public:                                       //    3          -    age
 			right = new CONDITION(sub_command);
 			return ;
 		}
-		tmp = std::strtok(strdup(command), "><=! ");
-		set_endpoint(tmp);
-		//std::fprintf(stderr, "First : %s\n", tmp);
-		if(!attribute || attribute == 3)
-		{
-			tmp = std::strtok(strdup(command), "idage0123456789 ");
-			//std::fprintf(stderr, "Second : |%s|\n", tmp);
-			set_num(tmp, std::atof(std::strtok(strdup(command), "idage><=! ")));
-		}
-		else
-		{
-			tmp = std::strtok(strdup(command), "\"namemail ");
-			//std::fprintf(stderr, "Second : |%s|\n", tmp);
-			set_str(tmp, std::strstr(command, "\""));
-		}
+		set_endpoint(std::strtok(strdup(command), " "));
+		tmp = std::strtok(NULL, " ");
+		if(!attribute || attribute == 3) set_num(tmp, std::atof(std::strtok(NULL, " ")));
+		else set_str(tmp, std::strtok(NULL, " "));
 	}
 	void test(ID_MAP & id_map, STR_MAP & name_map, STR_MAP & email_map, AGE_MAP & age_map, DATA_SET & ans, const bool mode)
 	{
