@@ -129,13 +129,13 @@ public:                                       //    3          -    age
 		right->test(id_map, name_map, email_map, age_map, ans, 1 - attribute); // 0 means put into 'ans' : or
 		                                                                       // 1 means take out from 'ans' : and
 	}
-	void set_endpoint(const char * type) 
+	inline void set_endpoint(const char * type) 
 	{
 		//std::fprintf(stderr, "Third : |%s|\n", type);
 		endpoint = 1;
 		attribute = distinguish_item(type);
 	}
-	void set_not_endpoint(const char * type)
+	inline void set_not_endpoint(const char * type)
 	{
 		endpoint = 0;
 		attribute = std::strcmp(type, "and") ? 1 : 0;

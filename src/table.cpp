@@ -20,28 +20,28 @@ public:
 		name_map.clear();
 		email_map.clear();
 	}
-	bool id_check(unsigned id) {return id_map.find(id) != id_map.end();}
-	void insert(AGE_MAP & age_map, unsigned num, DATA * data)
+	inline bool id_check(unsigned id) {return id_map.find(id) != id_map.end();}
+	inline void insert(AGE_MAP & age_map, unsigned num, DATA * data)
 	{
 		if(age_map.find(num) == age_map.end()) age_map[num].clear();
 		age_map[num].insert(data);
 	}
-	void insert(STR_MAP & str_map, const std::string & str, DATA * data)
+	inline void insert(STR_MAP & str_map, const std::string & str, DATA * data)
 	{
 		if(str_map.find(str) == str_map.end()) str_map[str].clear();
 		str_map[str].insert(data);
 	}
-	void erase(AGE_MAP & age_map, unsigned num, DATA * data)
+	inline void erase(AGE_MAP & age_map, unsigned num, DATA * data)
 	{
 		age_map[num].erase(data);
 		if(!age_map[num].size()) age_map.erase(num);
 	}
-	void erase(STR_MAP & str_map, const std::string & str, DATA * data)
+	inline void erase(STR_MAP & str_map, const std::string & str, DATA * data)
 	{
 		str_map[str].erase(data);
 		if(!str_map[str].size()) str_map.erase(str);
 	}
-	bool insert(char * command)
+	inline bool insert(char * command)
 	{
 		unsigned id, age;
 		char * name, * email;
@@ -148,9 +148,9 @@ public:
 			delete tmp;
 		}
 	}
-	double aggre(CONDITION * condition, unsigned content, unsigned mode, unsigned join, TABLE * like)
+	unsigned aggre(CONDITION * condition, unsigned content, unsigned mode, unsigned join, TABLE * like, unsigned & _sum)
 	{
-		unsigned sum = 0, count;
+		unsigned sum = 0, count = 0;
 		DATA_SET * target = condition ? & ans : & data;
 
 		if(condition) 
@@ -162,15 +162,14 @@ public:
 		if(!join)
 		{
 			count = target->size();
-			if(mode == 2) return count;
+			if(mode) return count;
 			if(!content) // id
 				for(DATA_SET::iterator it = target->begin() ; it != target->end() ; it++) sum += (* it)->id;
 			else if(content == 3) // age
 				for(DATA_SET::iterator it = target->begin() ; it != target->end() ; it++) sum += (* it)->age;
-			if(!mode) return sum;
-			return (double)sum/count;
+			_sum = sum;
+			return count;
 		}
-		count = 0;
 		if(join == 1)
 		{
 			for(DATA_SET::iterator it = target->begin() ; it != target->end() ; it++) 
@@ -278,6 +277,6 @@ public:
 				}
 		}
 	}
-	int size() {return data.size();}
+	inline unsigned size() {return data.size();}
 };
 

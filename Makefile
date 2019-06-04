@@ -1,5 +1,5 @@
 all:
-	g++ -o shell -Wall -O3 -g src/main.cpp
+	g++ -o shell -Wall -O3 src/main.cpp
 testgen:
 	g++ -o testgen -Wall -O3 src/test.cpp
 clean:

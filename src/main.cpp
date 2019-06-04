@@ -98,8 +98,10 @@ int main(int N, char ** args)
 			{
 				if(offset || !limit) {std::fprintf(stderr, "Empty set\n"); continue;}
 				bool first = true;
+				static unsigned record[2][3];
 				unsigned join = std::strstr(command, " id = id1 ") ? 1 : (std::strstr(command, " id = id2 ") ? 2 : 0); // get the type of join
 
+				record[target_table][0] = record[target_table][1] = record[target_table][2] = -1;
 				std::fprintf(fp, "(");
 				while(type = std::strtok(NULL, "(, "))
 				{
@@ -109,7 +111,9 @@ int main(int N, char ** args)
 						target_item = distinguish_item(item);
 						if(!first) std::fprintf(fp, ", ");
 						else first = false;
-						std::fprintf(fp, "%u", (unsigned)table[target_table].aggre(condition, target_item, 0, 0, NULL));
+						if(record[target_table][target_item & 1] == -1)
+							record[target_table][2] = table[target_table].aggre(condition, target_item, 0, 0, NULL, record[target_table][target_item & 1]);
+						std::fprintf(fp, "%u", record[target_table][target_item & 1]);
 					}
 					else if(!std::strcmp(type, "avg"))
 					{
@@ -117,14 +121,18 @@ int main(int N, char ** args)
 						target_item = distinguish_item(item);
 						if(!first) std::fprintf(fp, ", ");
 						else first = false;
-						std::fprintf(fp, "%.3lf", table[target_table].aggre(condition, target_item, 1, 0, NULL));
+						if(record[target_table][target_item & 1] == -1)
+							record[target_table][2] = table[target_table].aggre(condition, target_item, 0, 0, NULL, record[target_table][target_item & 1]);
+						std::fprintf(fp, "%.3lf", (double)record[target_table][target_item & 1]/record[target_table][2]);
 					}
 					else if(!std::strcmp(type, "count"))
 					{
 						item = std::strtok(NULL, ")");
 						if(!first) std::fprintf(fp, ", ");
 						else first = false;
-						std::fprintf(fp, "%u", (unsigned)table[target_table].aggre(condition, target_item, 2, join, & table[1]));
+						if(record[target_table][2] == -1)
+							record[target_table][2] = table[target_table].aggre(condition, target_item, 1, join, & table[1], target_table);
+						std::fprintf(fp, "%u", record[target_table][2]);
 					}
 				}
 				std::fprintf(fp, ")\n");
@@ -159,7 +167,7 @@ int main(int N, char ** args)
 			std::strtok(NULL, " "); //skip the table name
 			std::strtok(NULL, " "); //skip the word 'set'
 			target_item = distinguish_item(std::strtok(NULL, " ="));
-			if(!target_item && (table[target_table].aggre(condition, 0, 2, 0, NULL) > 1 || table[target_table].id_check(std::atoi(std::strstr(command, "=") + 2))))
+			if(!target_item && (table[target_table].aggre(condition, 0, 1, 0, NULL, target_table) > 1 || table[target_table].id_check(std::atoi(std::strstr(command, "=") + 2))))
 			{
 				std::fprintf(stderr, "Invalid update with command : %s\n", command);
 				continue;
